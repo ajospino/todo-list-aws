@@ -31,7 +31,7 @@ pipeline {
         stage('Rest') {
             agent {label 'nux'}
             environment{
-                BASE_URL = $BASE_URL
+                BASE_URL = "$BASE_URL"
             }
             steps {
                 
