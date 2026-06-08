@@ -45,26 +45,25 @@ pipeline {
             }
         }
 
-        stage('Tests') {
-            stage('Rest') {
-                agent {label 'nux'}
-                
-                steps {
-                    script{
-                        try{
-                            sh """
-                                export BASE_URL=$BASE_URL
-                                python -m pytest --junitxml=result-rest.xml test/integration/todoapi_readonly_test.py
-                            """
-                        } catch (err){
-                            echo "No se ejecutaron las pruebas por el error de arriba"
-                        }
+        stage('Rest') {
+            agent {label 'nux'}
+            
+            steps {
+                script{
+                    try{
+                        sh """
+                            export BASE_URL=$BASE_URL
+                            python -m pytest --junitxml=result-rest.xml test/integration/todoapi_readonly_test.py
+                        """
+                    } catch (err){
+                        echo "No se ejecutaron las pruebas por el error de arriba"
+                        throw err
                     }
-                    sh 'whoami'
-                    sh 'hostname'
-                    echo WORKSPACE
-                }    
-            } 
+                }
+                sh 'whoami'
+                sh 'hostname'
+                echo WORKSPACE
+            }    
         } 
         
         stage('Cleanup'){
