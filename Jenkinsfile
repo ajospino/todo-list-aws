@@ -30,10 +30,12 @@ pipeline {
 
         stage('Rest') {
             agent {label 'nux'}
+            environment{
+                BASE_URL = $BASE_URL
+            }
             steps {
                 
                 sh '''
-                    export BASE_URL="$BASE_URL"
                     python -m pytest --junitxml=result-rest.xml test/integration
                 '''
             }    
