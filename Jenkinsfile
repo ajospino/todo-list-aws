@@ -7,9 +7,9 @@ pipeline {
         stage('Get Code') {
             agent {label 'aws'}
             steps {
-                STACK = "staging"
                 withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
                     script{
+                        STACK = "staging"
                             try {
                                 sh "git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout $STACK"
                             } catch (err) {
