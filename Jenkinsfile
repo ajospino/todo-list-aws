@@ -89,6 +89,7 @@ pipeline {
                     git checkout master
                     git config --global merge.ours.driver true
                     git merge develop
+                    git push
                 '''
             }
         }

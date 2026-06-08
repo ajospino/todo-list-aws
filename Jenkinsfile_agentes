@@ -77,6 +77,7 @@ pipeline {
                                 """
                             } catch (err){
                                 echo "No se ejecutaron las pruebas por el error de arriba"
+                                throw err
                             }
                         }
                         junit testResults: 'result-rest.xml'
@@ -95,6 +96,7 @@ pipeline {
                     git checkout master
                     git config --global merge.ours.driver true
                     git merge develop
+                    git push
                 '''
             }
         }
