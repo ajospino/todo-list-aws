@@ -83,8 +83,8 @@ pipeline {
             agent {label 'nux'}
             steps{
                 sh '''
-                    cd todo-list-aws
-                    git checkout master
+                    git checkout -b master
+                    git pull origin master
                     git config --global merge.ours.driver true
                     git merge develop
                     git push
