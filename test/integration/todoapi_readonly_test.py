@@ -50,7 +50,6 @@ class TestApi(unittest.TestCase):
         print('End - integration test List TODO')
     
     def test_api_gettodo(self):
-        sleep(15)
         print('---------------------------------------')
         print('Starting - integration test Get TODO')
         #Add TODO
@@ -63,7 +62,7 @@ class TestApi(unittest.TestCase):
         print('Response Add Todo: '+ str(json_response))
         jsonbody= json.loads(json_response['body'])
         id_todo = jsonbody['id']
-        print ('ID todo:'+id_todo)
+        print ('ID todo: '+id_todo)
         self.assertEqual(
             response.status_code, 200, "Error en la petición API a {url}"
         )
@@ -72,6 +71,7 @@ class TestApi(unittest.TestCase):
         )
         #Test GET TODO
         url = BASE_URL+"/todos/"+id_todo
+        sleep(15)
         response = requests.get(url)
         json_response = response.json()
         print('Response Get Todo: '+ str(json_response))
