@@ -29,6 +29,9 @@ pipeline {
                             sam build
                             sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --config-env $STACK
                         """
+                        sh 'whoami'
+                        sh 'hostname'
+                        echo WORKSPACE
                     } catch (err){
                         echo "No se ejecuto completamente el comando del SAM por el error de arriba"
                     }
