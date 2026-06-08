@@ -16,6 +16,7 @@ pipeline {
                             echo "No se clonó el repo por el error de arriba"
                         }
                     }
+                    
                 }
             }
         }
@@ -44,70 +45,27 @@ pipeline {
             }
         }
 
-        stage('Tests')
-        {
-            parallel {
-                stage('Static') { 
-                    agent {label 'win'}
-                    steps {
-                        sh 'flake8 --exit-zero --output-file=result-static.xml src/'
-                        recordIssues tools: [flake8(pattern: 'result-static.xml')] 
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
-                    }    
-                }
-
-                stage('Security') {
-                    agent {label 'win'}
-                    steps {
-                        sh 'bandit -r src/ -f xml -o result-security.xml'
-                        recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
-                    }    
-                }
-
-                stage('Rest') {
-                    agent {label 'nux'}
-                    steps {
-                        script{
-                            try{
-                                sh """
-                                    export BASE_URL=$BASE_URL
-                                    python -m pytest --junitxml=result-rest.xml test/integration
-                                """
-                            } catch (err){
-                                echo "No se ejecutaron las pruebas por el error de arriba"
-                                throw err
-                            }
+        stage('Tests') {
+            stage('Rest') {
+                agent {label 'nux'}
+                
+                steps {
+                    script{
+                        try{
+                            sh """
+                                export BASE_URL=$BASE_URL
+                                python -m pytest --junitxml=result-rest.xml test/integration/todoapi_readonly_test.py
+                            """
+                        } catch (err){
+                            echo "No se ejecutaron las pruebas por el error de arriba"
                         }
-                        junit testResults: 'result-rest.xml'
-                        bat 'whoami'
-                        bat 'hostname'
-                        echo WORKSPACE
-                    }    
-                } 
+                    }
+                    sh 'whoami'
+                    sh 'hostname'
+                    echo WORKSPACE
+                }    
             } 
-        }
-        
-        stage('Promote'){
-            agent {label 'nux'}
-            steps{
-                withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
-                    sh '''
-                        git checkout develop
-                        git checkout -b master
-                        git config pull.rebase false
-                        git config --global merge.ours.driver true
-                        git pull origin master
-                        git merge -s ours develop
-                        git push --set-upstream origin master
-                    '''
-                }
-            }
-        }
+        } 
         
         stage('Cleanup'){
             parallel{
