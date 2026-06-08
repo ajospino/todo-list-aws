@@ -1,2 +1,2 @@
-Jenkinsfile merge=keep-original
-Jenkinsfile_agentes merge=keep-original
+Jenkinsfile merge=ours
+Jenkinsfile_agentes merge=ours
