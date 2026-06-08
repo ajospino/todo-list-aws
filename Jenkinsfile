@@ -19,7 +19,7 @@ pipeline {
                     sam build
                     sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3
                 '''
-                def base_url = sh (script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
+                base_url = sh (script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
             }
         }
 
