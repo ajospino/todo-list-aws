@@ -92,7 +92,7 @@ pipeline {
             steps{
                 sh '''
                     git checkout master
-                    git config --global merge.keep-original.driver true
+                    git config --global merge.ours.driver true
                     git merge develop
                 '''
             }
