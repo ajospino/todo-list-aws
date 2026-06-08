@@ -31,7 +31,7 @@ pipeline {
                             sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --config-env $STACK
                         """
                     } catch (err){
-                        echo "No se pudo crear el stack por el error de arriba"
+                        echo "No se ejecuto completamente el comando del SAM por el error de arriba"
                     }
 
 
