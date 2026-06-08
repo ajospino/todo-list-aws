@@ -57,9 +57,6 @@ pipeline {
                     steps {
                         sh 'python -m bandit -r src/ -f xml -o result-security.xml'
                         recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
                     }    
                 }
 
