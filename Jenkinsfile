@@ -14,7 +14,7 @@ pipeline {
 
         stage('Deploy'){
             agent {label 'aws'}
-            steps{                
+            steps{
                 script {
                     try {
                         sh '''
