@@ -38,16 +38,6 @@ pipeline {
             } 
         } 
         
-        stage('Promote'){
-            agent {label 'nux'}
-            steps{
-                sh '''
-                    git config --global merge.keep-original.driver true
-                    git merge master
-                '''
-            }
-        }
-        
         stage('Cleanup'){
             parallel{
                 stage('Clear Workspace for Linux Agent 1'){
