@@ -82,15 +82,17 @@ pipeline {
         stage('Promote'){
             agent {label 'nux'}
             steps{
-                sh '''
-                    git checkout develop
-                    git checkout -b master
-                    git config pull.rebase false
-                    git config --global merge.ours.driver true
-                    git pull origin master
-                    git merge -s ours develop
-                    git push --set-upstream origin master
-                '''
+                withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
+                    sh '''
+                        git checkout develop
+                        git checkout -b master
+                        git config pull.rebase false
+                        git config --global merge.ours.driver true
+                        git pull origin master
+                        git merge -s ours develop
+                        git push --set-upstream origin master
+                    '''
+                }
             }
         }
         
