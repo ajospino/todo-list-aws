@@ -1,4 +1,4 @@
-def base_url
+def BASE_URL
 pipeline {
     agent none
 
@@ -19,7 +19,7 @@ pipeline {
                     sam build
                     sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3
                 '''
-                base_url = sh (script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
+                BASE_URL = sh (script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
             }
         }
 
@@ -29,7 +29,7 @@ pipeline {
             steps {
                 
                 sh '''
-                    export BASE_URL="$base_url"
+                    export BASE_URL="$BASE_URL"
                     python -m pytest --junitxml=result-rest.xml test/integration
                 '''
             }    
