@@ -7,34 +7,28 @@ pipeline {
             steps {
                 // Obtener código del repo
                 git 'https://github.com/ajospino/CP1.git'
+                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git'
+            }
+        }
+
+        stage('Deploy'){
+            agent {label 'aws'}
+            steps{
+                sh '''
+                    sam build
+                    sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3
+                '''
             }
         }
 
         stage('Tests')
         {
             parallel {
-                stage('Unit and Coverage') {
-                    agent {label 'nux'}
+                stage('Static') { 
+                    agent {label 'win'}
                     steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            sh '''
-                                python -m coverage run --branch --source=app --omit=app/__init__.py,app/api.py -m pytest --junitxml=result-unit.xml test/unit
-                                python -m coverage xml -o result-coverage.xml
-                            '''
-                        }
-                        junit testResults: 'result-unit.xml'
-                        recordCoverage qualityGates: [[criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0], [criticality: 'NOTE', integerThreshold: 95, metric: 'LINE', threshold: 95.0], [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0], [criticality: 'NOTE', integerThreshold: 90, metric: 'BRANCH', threshold: 90.0]], tools: [[parser: 'COBERTURA', pattern: 'result-coverage.xml'], [parser: 'JUNIT', pattern: 'result-unit.xml']]
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
-                    }
-                }
-                
-                stage('Static') {
-                    agent {label 'nux'}
-                    steps {
-                        sh 'python -m flake8 --exit-zero --output-file=result-static.xml app/'
-                        recordIssues tools: [flake8(pattern: 'result-static.xml')], qualityGates:[[threshold: 8, type: 'TOTAL', unstable: true]], unhealthy: 10 
+                        sh 'flake8 --exit-zero --output-file=result-static.xml src/'
+                        recordIssues tools: [flake8(pattern: 'result-static.xml')] 
                         sh 'whoami'
                         sh 'hostname'
                         echo WORKSPACE
@@ -42,10 +36,10 @@ pipeline {
                 }
 
                 stage('Security') {
-                    agent {label 'nux'}
+                    agent {label 'win'}
                     steps {
-                        sh 'python -m bandit -r app/ -f xml -o result-security.xml'
-                        recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')], qualityGates:[[threshold: 2, type: 'TOTAL', unstable: true]], unhealthy: 4                        
+                        sh 'bandit -r src/ -f xml -o result-security.xml'
+                        recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
                         sh 'whoami'
                         sh 'hostname'
                         echo WORKSPACE
@@ -53,39 +47,27 @@ pipeline {
                 }
 
                 stage('Rest') {
-                    agent {label 'win'}
+                    agent {label 'nux'}
                     steps {
                         bat '''
-                            set FLASK_APP=app\\api.py
-                            set FLASK_ENV=development
-                            start flask run
-                            start %wiremock% --root-dir test\\wiremock
-                            sleep 5
-                            pytest --junitxml=result-rest.xml test\\rest
+                            python -m pytest --junitxml=result-rest.xml test/integration
                         '''
-                        bat 'whoami'
-                        bat 'hostname'
-                        echo WORKSPACE
-                    }    
-                }
-
-                stage('Performance') {
-                    agent {label 'win'}
-                    steps {
-                        bat '''
-                            set PYTHONPATH=%WORKSPACE%
-                            set FLASK_APP=app\\api.py
-                            set FLASK_ENV=development
-                            start flask run
-                            jmeter -n -t test/jmeter/cp1-2_testrun.jmx -l result-performance.xml
-                        '''
-                        perfReport 'result-performance.xml'
                         bat 'whoami'
                         bat 'hostname'
                         echo WORKSPACE
                     }    
                 } 
             } 
+        }
+        
+        stage('Promote'){
+            agent {label 'nux'}
+            steps{
+                sh '''
+                    git config --global merge.keep-original.driver true
+                    git merge master
+                '''
+            }
         }
         
         stage('Cleanup'){
@@ -113,6 +95,13 @@ pipeline {
 
                 stage('Clear Workspace for Windows Agent 2'){
                     agent {label 'win'}
+                    steps{
+                        cleanWs notFailBuild: true 
+                    }
+                }
+
+                stage('Clear Workspace for AWS Agent'){
+                    agent {label 'aws'}
                     steps{
                         cleanWs notFailBuild: true 
                     }
