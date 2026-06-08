@@ -4,10 +4,8 @@ pipeline {
 
     stages {
         stage('Get Code') {
-            agent {label 'nux'}
+            agent {label 'aws'}
             steps {
-                // Obtener código del repo
-                git 'https://github.com/ajospino/todo-list-aws.git'
                 withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
                     sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout production'
                 }
