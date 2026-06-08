@@ -1,15 +1,16 @@
+def base_url
 pipeline {
     agent none
+
     stages {
         stage('Get Code') {
             agent {label 'nux'}
             steps {
                 // Obtener código del repo
                 git 'https://github.com/ajospino/todo-list-aws.git'
-                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git'
+                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout production'
             }
         }
-
 
         stage('Deploy'){
             agent {label 'aws'}
@@ -21,54 +22,19 @@ pipeline {
             }
         }
 
-        stage('Tests')
-        {
-            agent {label 'nux'}
-            parallel {
-                stage('Static') { 
-                    steps {
-                        sh 'python -m flake8 --exit-zero --output-file=result-static.xml src/'
-                        recordIssues tools: [flake8(pattern: 'result-static.xml')] 
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
-                    }    
-                }
-
-                stage('Security') {
-                    steps {
-                        sh 'python -m bandit -r src/ -f xml -o result-security.xml'
-                        recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
-                    }    
-                }
-
-                stage('Rest') {
-                    steps {
-                        bat '''
-                            python -m pytest --junitxml=result-rest.xml test\\integration
-                        '''
-                        bat 'whoami'
-                        bat 'hostname'
-                        echo WORKSPACE
-                    }    
-                } 
+        stage('Tests') {
+            stage('Rest') {
+                agent {label 'nux'}
+                steps {
+                    BASE_URL=sh 'aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text'
+                    sh '''
+                        export BASE_URL="$base_url"
+                        python -m pytest --junitxml=result-rest.xml test/integration
+                    '''
+                }    
             } 
-        }
-        
-        stage('Promote'){
-            agent {label 'nux'}
-            steps{
-                sh '''
-                    git config --global merge.keep-original.driver true
-                    git merge master
-                '''
-            }
-        }
-        
-        
+        } 
+                
         stage('Cleanup'){
             parallel{
                 stage('Clear Workspace for Linux Agent 1'){
@@ -85,6 +51,12 @@ pipeline {
                     }
                 }
 
+                stage('Clear Workspace for AWS Agent'){
+                    agent {label 'aws'}
+                    steps{
+                        cleanWs notFailBuild: true 
+                    }
+                }
             }
         }
     }
