@@ -30,10 +30,9 @@ pipeline {
 
         stage('Rest') {
             agent {label 'nux'}
-            echo "$BASE_URL"
             
             steps {
-                
+                echo "$BASE_URL"
                 sh '''
                     python -m pytest --junitxml=result-rest.xml test/integration
                 '''
