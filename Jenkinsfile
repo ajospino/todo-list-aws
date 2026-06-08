@@ -55,6 +55,7 @@ pipeline {
                         """
                     } catch (err){
                         echo "No se ejecutaron las pruebas por el error de arriba"
+                        throw err
                     }
                 }
             }    

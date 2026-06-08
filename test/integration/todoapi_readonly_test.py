@@ -31,8 +31,8 @@ class TestApi(unittest.TestCase):
         json_response = response.json()
         print('Response Add Todo: '+ str(json_response))
         jsonbody= json.loads(json_response['body'])
-        ID_TODO = jsonbody['id']
-        print ('ID todo:'+ID_TODO)
+        id_todo = jsonbody['id']
+        print ('ID todo:'+id_todo)
         self.assertEqual(
             response.status_code, 200, "Error en la petición API a {url}"
         )
@@ -62,8 +62,8 @@ class TestApi(unittest.TestCase):
         json_response = response.json()
         print('Response Add Todo: '+ str(json_response))
         jsonbody= json.loads(json_response['body'])
-        ID_TODO = jsonbody['id']
-        print ('ID todo:'+ID_TODO)
+        id_todo = jsonbody['id']
+        print ('ID todo:'+id_todo)
         self.assertEqual(
             response.status_code, 200, "Error en la petición API a {url}"
         )
@@ -71,7 +71,7 @@ class TestApi(unittest.TestCase):
             jsonbody['text'], "Integration text example - GET", "Error en la petición API a {url}"
         )
         #Test GET TODO
-        url = BASE_URL+"/todos/"+ID_TODO
+        url = BASE_URL+"/todos/"+id_todo
         response = requests.get(url)
         json_response = response.json()
         print('Response Get Todo: '+ str(json_response))
