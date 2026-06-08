@@ -1,31 +1,51 @@
+def BASE_URL
+def STACK
 pipeline {
     agent none
 
     stages {
         stage('Get Code') {
-            agent {label 'nux'}
+            agent {label 'aws'}
             steps {
-                // Obtener código del repo
-                git 'https://github.com/ajospino/todo-list-aws.git'
-                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout staging'
+                STACK = "staging"
+                withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
+                    script{
+                            try {
+                                sh "git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout $STACK"
+                            } catch (err) {
+                                echo "No se clonó el repo por el error de arriba"
+                            }
+                    }
+                }
             }
         }
 
         stage('Deploy'){
             agent {label 'aws'}
             steps{
-                sh '''
-                    sam build
-                    sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3
-                '''
+                script {
+                    try {
+                        sh """
+                            sam build
+                            sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --config-env $STACK
+                        """
+                    } catch (err){
+                        echo "No se pudo crear el stack por el error de arriba"
+                    }
+
+
+                    BASE_URL = sh ( script: "aws cloudformation describe-stacks --stack-name todo-list-aws-$STACK --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
+                    , returnStdout: true
+                    ).trim()
+                }
             }
         }
 
         stage('Tests')
-        {
-            agent {label 'nux'}
+        {          
             parallel {
                 stage('Static') { 
+                    agent {label 'nux'}
                     steps {
                         sh 'python -m flake8 --exit-zero --output-file=result-static.xml src/'
                         recordIssues tools: [flake8(pattern: 'result-static.xml')] 
@@ -36,6 +56,7 @@ pipeline {
                 }
 
                 stage('Security') {
+                    agent {label 'nux'}
                     steps {
                         sh 'python -m bandit -r src/ -f xml -o result-security.xml'
                         recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
@@ -46,12 +67,20 @@ pipeline {
                 }
 
                 stage('Rest') {
+                    agent {label 'nux'}
                     steps {
-                        bat '''
-                            python -m pytest --junitxml=result-rest.xml test\\integration
-                        '''
-                        bat 'whoami'
-                        bat 'hostname'
+                        script{
+                            try{
+                                sh """
+                                    export BASE_URL=$BASE_URL
+                                    python -m pytest --junitxml=result-rest.xml test/integration
+                                """
+                            } catch (err){
+                                echo "No se ejecutaron las pruebas por el error de arriba"
+                            }
+                        }
+                        sh 'whoami'
+                        sh 'hostname'
                         echo WORKSPACE
                     }    
                 } 
@@ -62,8 +91,9 @@ pipeline {
             agent {label 'nux'}
             steps{
                 sh '''
+                    git checkout master
                     git config --global merge.keep-original.driver true
-                    git merge master
+                    git merge develop
                 '''
             }
         }
@@ -80,6 +110,13 @@ pipeline {
 
                 stage('Clear Workspace for Linux Agent 2'){
                     agent {label 'nux'}
+                    steps{
+                        cleanWs notFailBuild: true 
+                    }
+                }
+
+                stage('Clear Workspace for AWS Agent'){
+                    agent {label 'aws'}
                     steps{
                         cleanWs notFailBuild: true 
                     }

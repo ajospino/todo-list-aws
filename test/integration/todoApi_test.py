@@ -199,4 +199,6 @@ class TestApi(unittest.TestCase):
             response.status_code, 404, "Error en la petición API a {url}"
         )
         print('End - integration test Delete TODO')
-    
+
+if __name__ == "__main__":  # pragma: no cover
+    unittest.main()
