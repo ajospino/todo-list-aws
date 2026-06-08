@@ -32,10 +32,10 @@ pipeline {
             agent {label 'nux'}
             
             steps {
-                sh "export BASE_URL=$BASE_URL"
-                sh '''
+                sh """
+                    export BASE_URL=$BASE_URL
                     python -m pytest --junitxml=result-rest.xml test/integration
-                '''
+                """
             }    
         } 
                 
