@@ -83,6 +83,7 @@ pipeline {
             agent {label 'nux'}
             steps{
                 sh '''
+                    git checkout develop
                     git checkout master
                     git config pull.rebase false
                     git config --global merge.ours.driver true
