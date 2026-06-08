@@ -84,8 +84,8 @@ pipeline {
                             }
                         }
                         junit testResults: 'result-rest.xml'
-                        bat 'whoami'
-                        bat 'hostname'
+                        sh 'whoami'
+                        sh 'hostname'
                         echo WORKSPACE
                     }    
                 } 
