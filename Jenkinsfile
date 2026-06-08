@@ -11,7 +11,7 @@ pipeline {
                         try {
                             sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout production'
                         } catch (err) {
-                            echo "No se clonó el repo por esto: ${err}"
+                            echo "No se clonó el repo por el error de arriba"
                         }
                     }
                     
@@ -29,7 +29,7 @@ pipeline {
                             sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --stack-name todo-list-aws-production --region us-east-1
                         '''
                     } catch (err){
-                        echo "No se pudo crear el stack por esto: ${err}"
+                        echo "No se pudo crear el stack por el error de arriba"
                     }
 
 
@@ -52,7 +52,7 @@ pipeline {
                             python -m pytest --junitxml=result-rest.xml test/integration
                         """
                     } catch (err){
-                        echo "No se ejecutaron las pruebas por esto: ${err}"
+                        echo "No se ejecutaron las pruebas por el error de arriba"
                     }
                 }
             }    
