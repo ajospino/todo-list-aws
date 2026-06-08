@@ -84,6 +84,7 @@ pipeline {
             steps{
                 sh '''
                     git checkout -b master
+                    git config pull.rebase false
                     git pull origin master
                     git config --global merge.ours.driver true
                     git merge develop
