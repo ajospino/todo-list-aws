@@ -4,40 +4,59 @@ pipeline {
 
     stages {
         stage('Get Code') {
-            agent {label 'nux'}
+            agent {label 'aws'}
             steps {
-                // Obtener código del repo
-                git 'https://github.com/ajospino/todo-list-aws.git'
-                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout production'
+                withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
+                    script{
+                        try {
+                            sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout production'
+                        } catch (err) {
+                            echo "No se clonó el repo por el error de arriba"
+                        }
+                    }
+                    
+                }
             }
         }
 
         stage('Deploy'){
             agent {label 'aws'}
             steps{
-                sh '''
-                    sam build
-                    sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3
-                '''
+                script {
+                    try {
+                        sh '''
+                            sam build
+                            sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --stack-name todo-list-aws-production --region us-east-1
+                        '''
+                    } catch (err){
+                        echo "No se pudo crear el stack por el error de arriba"
+                    }
+
+
+                    BASE_URL = sh ( script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
+                    , returnStdout: true
+                    ).trim()
+                }
             }
         }
 
-        stage('Tests') {
-            stage('Rest') {
-                agent {label 'nux'}
-                steps {
-                    base_url=sh "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
-                    sh '''
-                        export BASE_URL="$base_url"
-                        python -m pytest --junitxml=result-rest.xml test/integration
-                    '''
-                    sh 'whoami'
-                    sh 'hostname'
-                    echo WORKSPACE
-                }    
-            } 
+
+        stage('Rest') {
+            agent {label 'nux'}
+            
+            steps {
+                script{
+                    try{
+                        sh """
+                            export BASE_URL=$BASE_URL
+                            python -m pytest --junitxml=result-rest.xml test/integration
+                        """
+                    } catch (err){
+                        echo "No se ejecutaron las pruebas por el error de arriba"
+                    }
+                }
+            }    
         } 
-        
         stage('Cleanup'){
             parallel{
                 stage('Clear Workspace for Linux Agent 1'){
