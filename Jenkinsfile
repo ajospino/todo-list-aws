@@ -49,9 +49,6 @@ pipeline {
                     steps {
                         sh 'python -m flake8 --exit-zero --output-file=result-static.xml src/'
                         recordIssues tools: [flake8(pattern: 'result-static.xml')] 
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
                     }    
                 }
 
@@ -77,11 +74,9 @@ pipeline {
                                 """
                             } catch (err){
                                 echo "No se ejecutaron las pruebas por el error de arriba"
+                                throw err
                             }
                         }
-                        sh 'whoami'
-                        sh 'hostname'
-                        echo WORKSPACE
                     }    
                 } 
             } 
@@ -97,7 +92,6 @@ pipeline {
                 '''
             }
         }
-        
         
         stage('Cleanup'){
             parallel{
@@ -121,7 +115,6 @@ pipeline {
                         cleanWs notFailBuild: true 
                     }
                 }
-
             }
         }
     }

@@ -92,8 +92,9 @@ pipeline {
             agent {label 'nux'}
             steps{
                 sh '''
-                    git config --global merge.keep-original.driver true
-                    git merge master
+                    git checkout master
+                    git config --global merge.ours.driver true
+                    git merge develop
                 '''
             }
         }
@@ -134,7 +135,6 @@ pipeline {
                         cleanWs notFailBuild: true 
                     }
                 }
-
             }
         }
     }
