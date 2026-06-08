@@ -22,17 +22,16 @@ pipeline {
             }
         }
 
-        stage('Tests') {
-            stage('Rest') {
-                agent {label 'nux'}
-                steps {
-                    base_url=sh "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
-                    sh '''
-                        export BASE_URL="$base_url"
-                        python -m pytest --junitxml=result-rest.xml test/integration
-                    '''
-                }    
-            } 
+
+        stage('Rest') {
+            agent {label 'nux'}
+            steps {
+                base_url=sh "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
+                sh '''
+                    export BASE_URL="$base_url"
+                    python -m pytest --junitxml=result-rest.xml test/integration
+                '''
+            }    
         } 
                 
         stage('Cleanup'){
