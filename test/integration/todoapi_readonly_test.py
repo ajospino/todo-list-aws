@@ -1,10 +1,9 @@
-import http.client
 import os
 import unittest
 from urllib.request import urlopen
 import requests
 import json
-
+from time import sleep
 import pytest
 
 BASE_URL = os.environ.get("BASE_URL")
@@ -51,6 +50,7 @@ class TestApi(unittest.TestCase):
         print('End - integration test List TODO')
     
     def test_api_gettodo(self):
+        sleep(15)
         print('---------------------------------------')
         print('Starting - integration test Get TODO')
         #Add TODO
