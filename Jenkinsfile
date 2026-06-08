@@ -32,7 +32,7 @@ pipeline {
             agent {label 'nux'}
             
             steps {
-                echo "$BASE_URL"
+                sh "export BASE_URL=$BASE_URL"
                 sh '''
                     python -m pytest --junitxml=result-rest.xml test/integration
                 '''
