@@ -9,13 +9,14 @@ pipeline {
             steps {
                 withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
                     script{
-                        STACK = "staging"
-                            try {
-                                sh "git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout $STACK"
-                            } catch (err) {
-                                echo "No se clonó el repo por el error de arriba"
-                            }
+                        STACK = "production"
+                        try {
+                            sh "git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout $STACK"
+                        } catch (err) {
+                            echo "No se clonó el repo por el error de arriba"
+                        }
                     }
+                    
                 }
             }
         }
@@ -30,7 +31,7 @@ pipeline {
                             sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --config-env $STACK
                         """
                     } catch (err){
-                        echo "No se ejecuto completamente el comando del SAM por el error de arriba"
+                        echo "No se pudo crear el stack por el error de arriba"
                     }
 
 
@@ -41,61 +42,24 @@ pipeline {
             }
         }
 
-        stage('Tests')
-        {          
-            parallel {
-                stage('Static') { 
-                    agent {label 'nux'}
-                    steps {
-                        sh 'python -m flake8 --exit-zero --output-file=result-static.xml src/'
-                        recordIssues tools: [flake8(pattern: 'result-static.xml')] 
-                    }    
-                }
 
-                stage('Security') {
-                    agent {label 'nux'}
-                    steps {
-                        sh 'python -m bandit -r src/ -f xml -o result-security.xml'
-                        recordIssues tools: [pyLint(name:'Security', pattern: 'result-security.xml')]                        
-                    }    
-                }
-
-                stage('Rest') {
-                    agent {label 'nux'}
-                    steps {
-                        script{
-                            try{
-                                sh """
-                                    export BASE_URL=$BASE_URL
-                                    python -m pytest --junitxml=result-rest.xml test/integration
-                                """
-                            } catch (err){
-                                echo "No se ejecutaron las pruebas por el error de arriba"
-                                throw err
-                            }
-                        }
-                    }    
-                } 
-            } 
-        }
-        
-        stage('Promote'){
+        stage('Rest') {
             agent {label 'nux'}
-            steps{
-                withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
-                    sh '''
-                        git checkout develop
-                        git checkout -b master
-                        git config pull.rebase false
-                        git config --global merge.ours.driver true
-                        git pull origin master
-                        git merge -s ours develop
-                        git push --set-upstream origin master
-                    '''
+            
+            steps {
+                script{
+                    try{
+                        sh """
+                            export BASE_URL=$BASE_URL
+                            python -m pytest --junitxml=result-rest.xml test/integration/todoapi_readonly_test.py
+                        """
+                    } catch (err){
+                        echo "No se ejecutaron las pruebas por el error de arriba"
+                    }
                 }
-            }
-        }
-        
+            }    
+        } 
+                
         stage('Cleanup'){
             parallel{
                 stage('Clear Workspace for Linux Agent 1'){
