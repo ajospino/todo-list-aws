@@ -15,10 +15,15 @@ pipeline {
         stage('Deploy'){
             agent {label 'aws'}
             steps{
-                sh '''
+                try {
+                    sh '''
                     sam build
                     sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --stack-name todo-list-aws-production --region us-east-1
-                '''
+                    '''
+                } catch (err){
+                    echo "No se pudo crear el stack por esto: ${err}"
+                }
+                
                 script { 
                     BASE_URL = sh ( script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text"
                     , returnStdout: true
@@ -62,6 +67,10 @@ pipeline {
                     }
                 }
             }
+        }
+    } post {
+        always{
+            cleanWs notFailBuild: true
         }
     }
 }
