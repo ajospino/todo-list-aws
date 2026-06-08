@@ -1,15 +1,15 @@
 pipeline {
     agent none
+
     stages {
         stage('Get Code') {
             agent {label 'nux'}
             steps {
                 // Obtener código del repo
                 git 'https://github.com/ajospino/todo-list-aws.git'
-                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git'
+                sh 'git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout staging'
             }
         }
-
 
         stage('Deploy'){
             agent {label 'aws'}
