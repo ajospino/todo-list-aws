@@ -9,7 +9,7 @@ pipeline {
             steps {
                 withCredentials([gitUsernamePassword(credentialsId: 'githubTokenCP1.4')]){
                     script{
-                        STACK = "staging"
+                        STACK = "production"
                         try {
                             sh "git clone https://github.com/ajospino/todo-list-aws-config.git && cd todo-list-aws-config && git checkout $STACK"
                         } catch (err) {
@@ -29,6 +29,9 @@ pipeline {
                             sam build
                             sam deploy --config-file todo-list-aws-config/samconfig.toml --resolve-s3 --config-env $STACK
                         """
+                        sh 'whoami'
+                        sh 'hostname'
+                        echo WORKSPACE
                     } catch (err){
                         echo "No se ejecuto completamente el comando del SAM por el error de arriba"
                     }
