@@ -30,9 +30,8 @@ pipeline {
 
         stage('Rest') {
             agent {label 'nux'}
-            environment{
-                BASE_URL = "$BASE_URL"
-            }
+            echo "$BASE_URL"
+            
             steps {
                 
                 sh '''
